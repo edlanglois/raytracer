@@ -469,6 +469,7 @@ dependencies = [
  "clap",
  "image",
  "indicatif",
+ "num-traits",
 ]
 
 [[package]]
