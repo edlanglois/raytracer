@@ -1,20 +1,26 @@
+use crate::materials::Material;
 use crate::ray::Ray;
 use crate::surface::{Intersection, Surface};
 use crate::vec3::VecR3;
 
 /// A Sphere
-pub struct Sphere {
+pub struct Sphere<M: Material> {
     center: VecR3,
     radius: f64,
+    material: M,
 }
 
-impl Sphere {
-    pub fn new(center: VecR3, radius: f64) -> Self {
-        Self { center, radius }
+impl<M: Material> Sphere<M> {
+    pub fn new(center: VecR3, radius: f64, material: M) -> Self {
+        Self {
+            center,
+            radius,
+            material,
+        }
     }
 }
 
-impl Surface for Sphere {
+impl<M: Material> Surface for Sphere<M> {
     fn intersect(&self, ray: &Ray<f64>, t_min: f64, t_max: f64) -> Option<Intersection> {
         let rel_origin = ray.origin - self.center;
         let a = ray.direction.norm_squared();
@@ -39,11 +45,12 @@ impl Surface for Sphere {
 
         let point = ray.at(t);
         let outward_normal = (point - self.center) / self.radius;
-        return Some(Intersection::from_front_normal(
+        return Some(Intersection::new(
             ray,
             t,
             point,
             outward_normal,
+            &self.material,
         ));
     }
 }

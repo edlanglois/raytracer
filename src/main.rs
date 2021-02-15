@@ -3,6 +3,7 @@ use clap::Clap;
 use image::RgbImage;
 use indicatif::{ProgressBar, ProgressIterator};
 use rand;
+use raytracer::materials::{Lambertian, Metal};
 use raytracer::objects::Sphere;
 use raytracer::{Camera, Colour, RayR3, Surface, Vec3};
 use std::f64;
@@ -35,18 +36,14 @@ fn ray_colour<T: Surface>(ray: &RayR3, surface: &T, depth: u32) -> Colour {
 
     // 0.001 is to prevent collisions with the object the ray is leaving; the "acne" problem.
     if let Some(intersection) = surface.intersect(ray, 0.001, f64::INFINITY) {
-        // let n = intersection.normal;
-        // return Colour::new(n.x + 1.0, n.y + 1.0, n.z + 1.0) / 2.0;
-        let target = intersection.point + intersection.normal + rand::random();
-        return ray_colour(
-            &RayR3::new(intersection.point, target - intersection.point),
-            surface,
-            depth - 1,
-        ) / 2.0;
+        if let Some((colour, scatter)) = intersection.scatter(ray) {
+            return colour.elementwise_mul(ray_colour(&scatter, surface, depth - 1));
+        }
+        return Colour::new(0.0, 0.0, 0.0);
     }
 
     // A simple gradient
-    let unit_direction = ray.direction.unit_vector();
+    let unit_direction = ray.direction.as_unit();
     let t = (unit_direction.y + 1.0) / 2.0;
     Colour::new(1.0, 1.0, 1.0) * (1.0 - t) + Colour::new(0.5, 0.7, 1.0) * t
 }
@@ -61,8 +58,35 @@ fn main() -> Result<(), anyhow::Error> {
 
     // World
     let mut world: Vec<Box<dyn Surface>> = Vec::new();
-    world.push(Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0))); // ground
-    world.push(Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5)));
+    // Ground
+    world.push(Box::new(Sphere::new(
+        Vec3::new(0.0, -100.5, -1.0),
+        100.0,
+        Lambertian {
+            colour: Colour::new(0.8, 0.8, 0.0),
+        },
+    )));
+    world.push(Box::new(Sphere::new(
+        Vec3::new(0.0, 0.0, -1.0),
+        0.5,
+        Lambertian {
+            colour: Colour::new(0.7, 0.3, 0.3),
+        },
+    )));
+    world.push(Box::new(Sphere::new(
+        Vec3::new(-1.0, 0.0, -1.0),
+        0.5,
+        Metal {
+            colour: Colour::new(0.8, 0.8, 0.8),
+        },
+    )));
+    world.push(Box::new(Sphere::new(
+        Vec3::new(1.0, 0.0, -1.0),
+        0.5,
+        Metal {
+            colour: Colour::new(0.8, 0.6, 0.2),
+        },
+    )));
 
     // Camera
     let viewport_height = 2.0;

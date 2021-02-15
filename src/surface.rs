@@ -1,8 +1,10 @@
+use crate::colour::Colour;
+use crate::materials::Material;
 use crate::ray::RayR3;
 use crate::vec3::VecR3;
 
 /// Details about a ray-surface intersection
-pub struct Intersection {
+pub struct Intersection<'a> {
     /// The ray position at which the intersection occurs
     pub t: f64,
     /// The intersection point
@@ -12,11 +14,19 @@ pub struct Intersection {
     pub normal: VecR3,
     /// Whether the ray enters the front face or the back face of the surface.
     pub front_face: bool,
+    /// Surface material
+    pub material: &'a dyn Material,
 }
 
-impl Intersection {
+impl<'a> Intersection<'a> {
     /// Construct an intersection using a normal pointing from the front face.
-    pub fn from_front_normal(ray: &RayR3, t: f64, point: VecR3, front_normal: VecR3) -> Self {
+    pub fn new(
+        ray: &RayR3,
+        t: f64,
+        point: VecR3,
+        front_normal: VecR3,
+        material: &'a dyn Material,
+    ) -> Self {
         let front_face = ray.direction.dot(front_normal) < 0.0;
         let normal = if front_face {
             front_normal
@@ -28,7 +38,13 @@ impl Intersection {
             point,
             normal,
             front_face,
+            material,
         }
+    }
+
+    /// Scatter a ray off of this intersection
+    pub fn scatter(&self, ray: &RayR3) -> Option<(Colour, RayR3)> {
+        self.material.scatter(ray, &self.point, &self.normal)
     }
 }
 
@@ -55,7 +71,7 @@ pub fn intersect_surfaces<'a, I>(
     ray: &RayR3,
     t_min: f64,
     t_max: f64,
-) -> Option<Intersection>
+) -> Option<Intersection<'a>>
 where
     I: Iterator<Item = &'a Box<dyn Surface>>,
 {

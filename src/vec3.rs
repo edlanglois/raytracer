@@ -31,6 +31,18 @@ impl<T> Vec3<T> {
         value += self.z * other.z;
         value
     }
+
+    /// Elementwise multiplication
+    pub fn elementwise_mul<U>(self, other: Vec3<U>) -> Vec3<<T as Mul<U>>::Output>
+    where
+        T: Mul<U>,
+    {
+        Vec3 {
+            x: self.x * other.x,
+            y: self.y * other.y,
+            z: self.z * other.z,
+        }
+    }
 }
 
 impl<T: Copy> Vec3<T> {
@@ -65,12 +77,26 @@ where
     T: Real + AddAssign,
 {
     /// Euclidean norm
-    pub fn norm(self) -> T {
+    pub fn norm(&self) -> T {
         self.norm_squared().sqrt()
     }
 
-    pub fn unit_vector(self) -> Self {
+    /// Rescale to have unit length
+    pub fn as_unit(self) -> Self {
         self / self.norm()
+    }
+}
+
+impl Vec3<f64> {
+    /// Check if all dimensions are close to zero.
+    pub fn near_zero(&self) -> bool {
+        let s = 1e-8;
+        self.x.abs() < s && self.y.abs() < s && self.z.abs() < s
+    }
+
+    /// Reflect across a normal
+    pub fn reflect(self, normal: Vec3<f64>) -> Self {
+        self - normal * self.dot(normal) * 2.0
     }
 }
 
@@ -235,8 +261,9 @@ impl Distribution<VecR3> for Standard {
         // Use rejection sampling to get a point within the sphere
         loop {
             let (x, y, z) = rng.gen();
-            if x * x + y * y + z * z < 1.0 {
-                return Vec3::new(x, y, z).unit_vector();
+            let norm_squared = x * x + y * y + z * z;
+            if norm_squared < 1.0 && norm_squared > 1e-12 {
+                return Vec3::new(x, y, z).as_unit();
             }
         }
     }
