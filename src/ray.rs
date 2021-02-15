@@ -13,7 +13,7 @@ impl<T> Ray<T> {
 }
 
 impl<T: Copy> Ray<T> {
-    fn at<U>(&self, t: U) -> <Vec3<T> as Add<<Vec3<T> as Mul<U>>::Output>>::Output
+    pub fn at<U>(&self, t: U) -> <Vec3<T> as Add<<Vec3<T> as Mul<U>>::Output>>::Output
     where
         Vec3<T>: Mul<U>,
         Vec3<T>: Add<<Vec3<T> as Mul<U>>::Output>,
