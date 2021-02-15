@@ -2,8 +2,9 @@ use anyhow;
 use clap::Clap;
 use image::RgbImage;
 use indicatif::{ProgressBar, ProgressIterator};
+use rand;
 use raytracer::objects::Sphere;
-use raytracer::{Colour, RayR3, Surface, Vec3};
+use raytracer::{Camera, Colour, RayR3, Surface, Vec3};
 use std::f64;
 
 #[derive(Clap)]
@@ -18,6 +19,9 @@ struct Opts {
 
     #[clap(long, default_value = "225")]
     height: u32,
+
+    #[clap(long, default_value = "10")]
+    samples_per_pixel: u32,
 }
 
 fn ray_colour<T: Surface>(ray: &RayR3, surface: &T) -> Colour {
@@ -48,28 +52,23 @@ fn main() -> Result<(), anyhow::Error> {
     // Camera
     let viewport_height = 2.0;
     let viewport_width = viewport_height / image_height as f64 * image_width as f64;
-    let focal_length = 1.0;
-
-    let origin = Vec3::new(0.0, 0.0, 0.0);
-    let horizontal = Vec3::new(viewport_width, 0.0, 0.0);
-    let vertical = Vec3::new(0.0, viewport_height, 0.0);
-    let lower_left_corner =
-        origin - horizontal / 2.0 - vertical / 2.0 - Vec3::new(0.0, 0.0, focal_length);
+    let camera = Camera::new(viewport_width, viewport_height, 1.0);
 
     // Render
     println!("Rendering...");
     let bar = ProgressBar::new((image_height * image_width) as u64);
-    bar.set_draw_delta(5000);
+    bar.set_draw_delta(5000 / opts.samples_per_pixel as u64);
     for (x, y, pixel) in image.enumerate_pixels_mut().progress_with(bar) {
-        // (u, v) measure from bottom left corner
-        let u = (x as f64) / ((image_width - 1) as f64);
-        let v = ((image_height - 1 - y) as f64) / ((image_height - 1) as f64);
-        // Ray from the origin to this point
-        let ray = RayR3 {
-            origin,
-            direction: lower_left_corner + horizontal * u + vertical * v - origin,
-        };
-        *pixel = ray_colour(&ray, &world).into();
+        let mut colour = Colour::new(0.0, 0.0, 0.0);
+        for _ in 0..opts.samples_per_pixel {
+            // (u, v) measure from bottom left corner
+            let u = (x as f64 + rand::random::<f64>()) / ((image_width - 1) as f64);
+            let v = ((image_height - 1 - y) as f64 + rand::random::<f64>())
+                / ((image_height - 1) as f64);
+            let ray = camera.get_ray(u, v);
+            colour += ray_colour(&ray, &world);
+        }
+        *pixel = (colour / opts.samples_per_pixel as f64).into();
     }
 
     println!("Saving image to '{}'", opts.output);
