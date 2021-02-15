@@ -10,6 +10,9 @@ pub struct Vec3<T> {
     pub z: T,
 }
 
+/// Vector in R^3
+pub type VecR3 = Vec3<f64>;
+
 impl<T> Vec3<T> {
     pub fn new(x: T, y: T, z: T) -> Self {
         Self { x, y, z }

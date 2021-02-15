@@ -1,27 +1,22 @@
-use crate::ray::Ray;
-use crate::vec3::Vec3;
+use crate::ray::RayR3;
+use crate::vec3::VecR3;
 
 /// Details about a ray-surface intersection
 pub struct Intersection {
     /// The ray position at which the intersection occurs
     pub t: f64,
     /// The intersection point
-    pub point: Vec3<f64>,
+    pub point: VecR3,
     /// The unit normal surface vector at the intersection point
     /// Points from the side of the surface that the ray enters.
-    pub normal: Vec3<f64>,
+    pub normal: VecR3,
     /// Whether the ray enters the front face or the back face of the surface.
     pub front_face: bool,
 }
 
 impl Intersection {
     /// Construct an intersection using a normal pointing from the front face.
-    pub fn from_front_normal(
-        ray: &Ray<f64>,
-        t: f64,
-        point: Vec3<f64>,
-        front_normal: Vec3<f64>,
-    ) -> Self {
+    pub fn from_front_normal(ray: &RayR3, t: f64, point: VecR3, front_normal: VecR3) -> Self {
         let front_face = ray.direction.dot(front_normal) < 0.0;
         let normal = if front_face {
             front_normal
@@ -44,12 +39,12 @@ pub trait Surface {
     /// Intersect a ray with the surface.
     ///
     /// Returns the first intersection that occurs between t_min and t_max.
-    fn intersect(&self, ray: &Ray<f64>, t_min: f64, t_max: f64) -> Option<Intersection>;
+    fn intersect(&self, ray: &RayR3, t_min: f64, t_max: f64) -> Option<Intersection>;
 }
 
 /// A list of surfaces is itself a surface
 impl Surface for Vec<Box<dyn Surface>> {
-    fn intersect(&self, ray: &Ray<f64>, t_min: f64, t_max: f64) -> Option<Intersection> {
+    fn intersect(&self, ray: &RayR3, t_min: f64, t_max: f64) -> Option<Intersection> {
         return intersect_surfaces(self.iter(), ray, t_min, t_max);
     }
 }
@@ -57,7 +52,7 @@ impl Surface for Vec<Box<dyn Surface>> {
 /// Intersect a ray with an iterator of surfaces
 pub fn intersect_surfaces<'a, I>(
     iter: I,
-    ray: &Ray<f64>,
+    ray: &RayR3,
     t_min: f64,
     t_max: f64,
 ) -> Option<Intersection>

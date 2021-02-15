@@ -9,6 +9,9 @@ pub struct Ray<T> {
     pub direction: Vec3<T>,
 }
 
+/// A Ray in R^3
+pub type RayR3 = Ray<f64>;
+
 impl<T> Ray<T> {
     /// Create a new ray
     pub fn new(origin: Vec3<T>, direction: Vec3<T>) -> Self {

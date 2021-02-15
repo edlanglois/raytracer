@@ -1,15 +1,15 @@
 use crate::ray::Ray;
 use crate::surface::{Intersection, Surface};
-use crate::vec3::Vec3;
+use crate::vec3::VecR3;
 
 /// A Sphere
 pub struct Sphere {
-    center: Vec3<f64>,
+    center: VecR3,
     radius: f64,
 }
 
 impl Sphere {
-    pub fn new(center: Vec3<f64>, radius: f64) -> Self {
+    pub fn new(center: VecR3, radius: f64) -> Self {
         Self { center, radius }
     }
 }

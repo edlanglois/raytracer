@@ -3,7 +3,7 @@ use clap::Clap;
 use image::RgbImage;
 use indicatif::{ProgressBar, ProgressIterator};
 use raytracer::objects::Sphere;
-use raytracer::{Colour, Ray, Surface, Vec3};
+use raytracer::{Colour, RayR3, Surface, Vec3};
 use std::f64;
 
 #[derive(Clap)]
@@ -20,7 +20,7 @@ struct Opts {
     height: u32,
 }
 
-fn ray_colour<T: Surface>(ray: &Ray<f64>, surface: &T) -> Colour {
+fn ray_colour<T: Surface>(ray: &RayR3, surface: &T) -> Colour {
     if let Some(intersection) = surface.intersect(ray, 0.0, f64::INFINITY) {
         let n = intersection.normal;
         return Colour::new(n.x + 1.0, n.y + 1.0, n.z + 1.0) / 2.0;
@@ -65,7 +65,7 @@ fn main() -> Result<(), anyhow::Error> {
         let u = (x as f64) / ((image_width - 1) as f64);
         let v = ((image_height - 1 - y) as f64) / ((image_height - 1) as f64);
         // Ray from the origin to this point
-        let ray = Ray {
+        let ray = RayR3 {
             origin,
             direction: lower_left_corner + horizontal * u + vertical * v - origin,
         };
