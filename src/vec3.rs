@@ -1,4 +1,6 @@
 use num_traits::real::Real;
+use rand::distributions::{Distribution, Standard};
+use rand::Rng;
 use std::fmt;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
@@ -224,5 +226,18 @@ where
         self.x /= t;
         self.y /= t;
         self.z /= t;
+    }
+}
+
+/// Sample a random unit vector
+impl Distribution<VecR3> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> VecR3 {
+        // Use rejection sampling to get a point within the sphere
+        loop {
+            let (x, y, z) = rng.gen();
+            if x * x + y * y + z * z < 1.0 {
+                return Vec3::new(x, y, z).unit_vector();
+            }
+        }
     }
 }

@@ -22,12 +22,27 @@ struct Opts {
 
     #[clap(long, default_value = "10")]
     samples_per_pixel: u32,
+
+    #[clap(long, default_value = "50")]
+    max_depth: u32,
 }
 
-fn ray_colour<T: Surface>(ray: &RayR3, surface: &T) -> Colour {
-    if let Some(intersection) = surface.intersect(ray, 0.0, f64::INFINITY) {
-        let n = intersection.normal;
-        return Colour::new(n.x + 1.0, n.y + 1.0, n.z + 1.0) / 2.0;
+fn ray_colour<T: Surface>(ray: &RayR3, surface: &T, depth: u32) -> Colour {
+    // Exceeded ray bounce limit; no more light is gathered
+    if depth == 0 {
+        return Colour::new(0.0, 0.0, 0.0);
+    }
+
+    // 0.001 is to prevent collisions with the object the ray is leaving; the "acne" problem.
+    if let Some(intersection) = surface.intersect(ray, 0.001, f64::INFINITY) {
+        // let n = intersection.normal;
+        // return Colour::new(n.x + 1.0, n.y + 1.0, n.z + 1.0) / 2.0;
+        let target = intersection.point + intersection.normal + rand::random();
+        return ray_colour(
+            &RayR3::new(intersection.point, target - intersection.point),
+            surface,
+            depth - 1,
+        ) / 2.0;
     }
 
     // A simple gradient
@@ -66,9 +81,17 @@ fn main() -> Result<(), anyhow::Error> {
             let v = ((image_height - 1 - y) as f64 + rand::random::<f64>())
                 / ((image_height - 1) as f64);
             let ray = camera.get_ray(u, v);
-            colour += ray_colour(&ray, &world);
+            colour += ray_colour(&ray, &world, opts.max_depth);
         }
-        *pixel = (colour / opts.samples_per_pixel as f64).into();
+
+        colour /= opts.samples_per_pixel as f64;
+        // Gamma-correct for gamma=2
+        colour = Colour {
+            x: colour.x.sqrt(),
+            y: colour.y.sqrt(),
+            z: colour.z.sqrt(),
+        };
+        *pixel = colour.into();
     }
 
     println!("Saving image to '{}'", opts.output);
