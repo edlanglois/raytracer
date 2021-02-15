@@ -1,6 +1,7 @@
 use crate::vec3::Vec3;
 use image::Rgb;
 
+/// An RGB colour
 pub type Colour = Vec3<f64>;
 
 impl From<Colour> for Rgb<u8> {
