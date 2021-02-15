@@ -1,6 +1,5 @@
 use crate::ray::Ray;
 use crate::vec3::Vec3;
-use std::cmp::Ordering;
 
 /// Details about a ray-surface intersection
 pub struct Intersection {
@@ -55,16 +54,6 @@ impl Surface for Vec<Box<dyn Surface>> {
     }
 }
 
-fn f64_cmp(a: f64, b: f64) -> Ordering {
-    if a < b {
-        Ordering::Less
-    } else if a > b {
-        Ordering::Greater
-    } else {
-        Ordering::Equal
-    }
-}
-
 /// Intersect a ray with an iterator of surfaces
 pub fn intersect_surfaces<'a, I>(
     iter: I,
@@ -75,6 +64,13 @@ pub fn intersect_surfaces<'a, I>(
 where
     I: Iterator<Item = &'a Box<dyn Surface>>,
 {
-    iter.filter_map(|s| s.intersect(ray, t_min, t_max))
-        .min_by(|a, b| f64_cmp(a.t, b.t))
+    let mut result = None;
+    let mut closest_so_far = t_max;
+    for surface in iter {
+        if let Some(intersection) = surface.intersect(ray, t_min, closest_so_far) {
+            closest_so_far = intersection.t;
+            result = Some(intersection);
+        }
+    }
+    result
 }
