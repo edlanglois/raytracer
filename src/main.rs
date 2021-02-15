@@ -20,9 +20,8 @@ struct Opts {
     height: u32,
 }
 
-fn ray_colour(ray: &Ray<f64>) -> Colour {
-    let sphere = Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5);
-    if let Some(intersection) = sphere.intersect(ray, 0.0, f64::INFINITY) {
+fn ray_colour<T: Surface>(ray: &Ray<f64>, surface: &T) -> Colour {
+    if let Some(intersection) = surface.intersect(ray, 0.0, f64::INFINITY) {
         let n = intersection.normal;
         return Colour::new(n.x + 1.0, n.y + 1.0, n.z + 1.0) / 2.0;
     }
@@ -40,6 +39,11 @@ fn main() -> Result<(), anyhow::Error> {
     let mut image = RgbImage::new(opts.width, opts.height);
     let image_width = image.width();
     let image_height = image.height();
+
+    // World
+    let mut world: Vec<Box<dyn Surface>> = Vec::new();
+    world.push(Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0))); // ground
+    world.push(Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5)));
 
     // Camera
     let viewport_height = 2.0;
@@ -65,7 +69,7 @@ fn main() -> Result<(), anyhow::Error> {
             origin,
             direction: lower_left_corner + horizontal * u + vertical * v - origin,
         };
-        *pixel = ray_colour(&ray).into();
+        *pixel = ray_colour(&ray, &world).into();
     }
 
     println!("Saving image to '{}'", opts.output);

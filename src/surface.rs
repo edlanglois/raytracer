@@ -1,5 +1,6 @@
 use crate::ray::Ray;
 use crate::vec3::Vec3;
+use std::cmp::Ordering;
 
 /// Details about a ray-surface intersection
 pub struct Intersection {
@@ -45,4 +46,35 @@ pub trait Surface {
     ///
     /// Returns the first intersection that occurs between t_min and t_max.
     fn intersect(&self, ray: &Ray<f64>, t_min: f64, t_max: f64) -> Option<Intersection>;
+}
+
+/// A list of surfaces is itself a surface
+impl Surface for Vec<Box<dyn Surface>> {
+    fn intersect(&self, ray: &Ray<f64>, t_min: f64, t_max: f64) -> Option<Intersection> {
+        return intersect_surfaces(self.iter(), ray, t_min, t_max);
+    }
+}
+
+fn f64_cmp(a: f64, b: f64) -> Ordering {
+    if a < b {
+        Ordering::Less
+    } else if a > b {
+        Ordering::Greater
+    } else {
+        Ordering::Equal
+    }
+}
+
+/// Intersect a ray with an iterator of surfaces
+pub fn intersect_surfaces<'a, I>(
+    iter: I,
+    ray: &Ray<f64>,
+    t_min: f64,
+    t_max: f64,
+) -> Option<Intersection>
+where
+    I: Iterator<Item = &'a Box<dyn Surface>>,
+{
+    iter.filter_map(|s| s.intersect(ray, t_min, t_max))
+        .min_by(|a, b| f64_cmp(a.t, b.t))
 }
