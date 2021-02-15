@@ -260,7 +260,12 @@ impl Distribution<VecR3> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> VecR3 {
         // Use rejection sampling to get a point within the sphere
         loop {
-            let (x, y, z) = rng.gen();
+            // Sample [0, 1]
+            let (mut x, mut y, mut z) = rng.gen();
+            // Transform to [-1, 1]
+            x = x * 2.0 - 1.0;
+            y = y * 2.0 - 1.0;
+            z = z * 2.0 - 1.0;
             let norm_squared = x * x + y * y + z * z;
             if norm_squared < 1.0 && norm_squared > 1e-12 {
                 return Vec3::new(x, y, z).as_unit();
