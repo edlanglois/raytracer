@@ -76,16 +76,12 @@ fn main() -> Result<(), anyhow::Error> {
     world.push(Box::new(Sphere::new(
         Vec3::new(-1.0, 0.0, -1.0),
         0.5,
-        Metal {
-            colour: Colour::new(0.8, 0.8, 0.8),
-        },
+        Metal::new(Colour::new(0.8, 0.8, 0.8), 0.3),
     )));
     world.push(Box::new(Sphere::new(
         Vec3::new(1.0, 0.0, -1.0),
         0.5,
-        Metal {
-            colour: Colour::new(0.8, 0.6, 0.2),
-        },
+        Metal::new(Colour::new(0.8, 0.6, 0.2), 1.0),
     )));
 
     // Camera
