@@ -21,7 +21,7 @@ struct Opts {
     #[clap(long, default_value = "225")]
     height: u32,
 
-    #[clap(long, default_value = "10")]
+    #[clap(long, default_value = "100")]
     samples_per_pixel: u32,
 
     #[clap(long, default_value = "50")]
