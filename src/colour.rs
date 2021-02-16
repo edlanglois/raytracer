@@ -1,5 +1,6 @@
 use crate::vec3::Vec3;
 use image::Rgb;
+use rand;
 
 /// An RGB colour
 pub type Colour = Vec3<f64>;
@@ -22,4 +23,15 @@ impl From<Colour> for Rgb<u8> {
     fn from(c: Colour) -> Rgb<u8> {
         Rgb([float_to_u8(c.x), float_to_u8(c.y), float_to_u8(c.z)])
     }
+}
+
+pub fn random() -> Colour {
+    let (r, g, b) = rand::random();
+    Colour::new(r, g, b)
+}
+
+pub fn random_range(low: f64, high: f64) -> Colour {
+    let (r, g, b) = rand::random::<(f64, f64, f64)>();
+    let range = high - low;
+    Colour::new(r * range + low, g * range + low, b * range + low)
 }
