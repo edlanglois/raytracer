@@ -4,6 +4,7 @@ use crate::ray::RayR3;
 use crate::vec3::VecR3;
 
 /// A fully transparent surface that always refracts when possible
+#[derive(Debug, Clone)]
 pub struct Transparent {
     pub refractive_index: f64,
 }

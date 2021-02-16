@@ -5,8 +5,15 @@ use crate::vec3::VecR3;
 use rand;
 
 /// A Lambertian (matte) material
+#[derive(Debug, Clone)]
 pub struct Lambertian {
     pub colour: Colour,
+}
+
+impl Lambertian {
+    pub fn new(colour: Colour) -> Self {
+        Self { colour }
+    }
 }
 
 impl Material for Lambertian {

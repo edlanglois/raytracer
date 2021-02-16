@@ -39,52 +39,53 @@ fn main() -> Result<(), anyhow::Error> {
     let mut image = RgbImage::new(image_width, image_height);
 
     // World
+    let material_ground = Lambertian::new(Colour::new(0.8, 0.8, 0.0));
+    let material_center = Lambertian::new(Colour::new(0.1, 0.2, 0.5));
+    let material_left = Transparent::new(1.5);
+    let material_right = Metal::new(Colour::new(0.8, 0.6, 0.2), 0.0);
+
     let mut world: Vec<Box<dyn Surface>> = Vec::new();
     // Ground
     world.push(Box::new(Sphere::new(
         Vec3::new(0.0, -100.5, -1.0),
         100.0,
-        Lambertian {
-            colour: Colour::new(0.8, 0.8, 0.0),
-        },
+        material_ground,
     )));
+    // Center
     world.push(Box::new(Sphere::new(
         Vec3::new(0.0, 0.0, -1.0),
         0.5,
-        // Lambertian {
-        //     colour: Colour::new(0.7, 0.3, 0.3),
-        // },
-        // Transparent::new(1.5),
-        Lambertian {
-            colour: Colour::new(0.1, 0.2, 0.5),
-        },
+        material_center,
     )));
+    // Left
+    // Hollow glass sphere
     world.push(Box::new(Sphere::new(
         Vec3::new(-1.0, 0.0, -1.0),
         0.5,
-        // Metal::new(Colour::new(0.8, 0.8, 0.8), 0.3),
-        Transparent::new(1.5),
+        material_left.clone(),
     )));
+    world.push(Box::new(Sphere::new(
+        Vec3::new(-1.0, 0.0, -1.0),
+        -0.4,
+        material_left,
+    )));
+    // Right
     world.push(Box::new(Sphere::new(
         Vec3::new(1.0, 0.0, -1.0),
         0.5,
-        Metal::new(Colour::new(0.8, 0.6, 0.2), 0.0),
+        material_right,
     )));
-    // world.push(Box::new(Sphere::new(
-    //     Vec3::new(0.5, 0.0, -0.7),
-    //     0.2,
-    //     Transparent::new(1.5),
-    // )));
-    // world.push(Box::new(Sphere::new(
-    //     Vec3::new(0.0, 0.3, -5.0),
-    //     0.4,
-    //     Lambertian {
-    //         colour: Colour::new(0.7, 0.3, 0.3),
-    //     },
-    // )));
 
     // Camera
-    let camera = Camera::new(90.0, opts.aspect_ratio.into());
+    // let camera_location = Vec3::new(0.0, 0.0, 0.0),
+    let camera_location = Vec3::new(-2.0, 2.0, 1.0);
+    let camera = Camera::new(
+        camera_location,
+        Vec3::new(0.0, 0.0, -1.0),
+        Vec3::new(0.0, 1.0, 0.0),
+        20.0,
+        opts.aspect_ratio.into(),
+    );
 
     // Render
     println!("Rendering...");

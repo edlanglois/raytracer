@@ -5,6 +5,7 @@ use crate::vec3::VecR3;
 use rand;
 
 /// A reflective metal surface
+#[derive(Debug, Clone)]
 pub struct Metal {
     pub colour: Colour,
     pub fuzz: f64,
