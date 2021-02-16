@@ -3,30 +3,11 @@ use clap::Clap;
 use image::RgbImage;
 use indicatif::{ProgressBar, ProgressIterator};
 use rand;
-use raytracer::materials::{Lambertian, Metal};
+use raytracer::materials::{Lambertian, Metal, Transparent};
 use raytracer::objects::Sphere;
+use raytracer::Opts;
 use raytracer::{Camera, Colour, RayR3, Surface, Vec3};
 use std::f64;
-
-#[derive(Clap)]
-#[clap(version = "0.1.0", author = "Eric Langlois")]
-struct Opts {
-    #[clap(short, long, default_value = "images/image.png")]
-    output: String,
-
-    // Defaults to 16:9 aspect ratio
-    #[clap(long, default_value = "400")]
-    width: u32,
-
-    #[clap(long, default_value = "225")]
-    height: u32,
-
-    #[clap(long, default_value = "100")]
-    samples_per_pixel: u32,
-
-    #[clap(long, default_value = "50")]
-    max_depth: u32,
-}
 
 fn ray_colour<T: Surface>(ray: &RayR3, surface: &T, depth: u32) -> Colour {
     // Exceeded ray bounce limit; no more light is gathered
@@ -50,11 +31,12 @@ fn ray_colour<T: Surface>(ray: &RayR3, surface: &T, depth: u32) -> Colour {
 
 fn main() -> Result<(), anyhow::Error> {
     let opts: Opts = Opts::parse();
+    let image_width = opts.width;
+    let image_height = opts.aspect_ratio.a_to_b(image_width);
+    println!("Image dimensions: {} x {}", image_width, image_height);
 
     // Image
-    let mut image = RgbImage::new(opts.width, opts.height);
-    let image_width = image.width();
-    let image_height = image.height();
+    let mut image = RgbImage::new(image_width, image_height);
 
     // World
     let mut world: Vec<Box<dyn Surface>> = Vec::new();
@@ -69,25 +51,40 @@ fn main() -> Result<(), anyhow::Error> {
     world.push(Box::new(Sphere::new(
         Vec3::new(0.0, 0.0, -1.0),
         0.5,
+        // Lambertian {
+        //     colour: Colour::new(0.7, 0.3, 0.3),
+        // },
+        // Transparent::new(1.5),
         Lambertian {
-            colour: Colour::new(0.7, 0.3, 0.3),
+            colour: Colour::new(0.1, 0.2, 0.5),
         },
     )));
     world.push(Box::new(Sphere::new(
         Vec3::new(-1.0, 0.0, -1.0),
         0.5,
-        Metal::new(Colour::new(0.8, 0.8, 0.8), 0.3),
+        // Metal::new(Colour::new(0.8, 0.8, 0.8), 0.3),
+        Transparent::new(1.5),
     )));
     world.push(Box::new(Sphere::new(
         Vec3::new(1.0, 0.0, -1.0),
         0.5,
-        Metal::new(Colour::new(0.8, 0.6, 0.2), 1.0),
+        Metal::new(Colour::new(0.8, 0.6, 0.2), 0.0),
     )));
+    // world.push(Box::new(Sphere::new(
+    //     Vec3::new(0.5, 0.0, -0.7),
+    //     0.2,
+    //     Transparent::new(1.5),
+    // )));
+    // world.push(Box::new(Sphere::new(
+    //     Vec3::new(0.0, 0.3, -5.0),
+    //     0.4,
+    //     Lambertian {
+    //         colour: Colour::new(0.7, 0.3, 0.3),
+    //     },
+    // )));
 
     // Camera
-    let viewport_height = 2.0;
-    let viewport_width = viewport_height / image_height as f64 * image_width as f64;
-    let camera = Camera::new(viewport_width, viewport_height, 1.0);
+    let camera = Camera::new(90.0, opts.aspect_ratio.into());
 
     // Render
     println!("Rendering...");

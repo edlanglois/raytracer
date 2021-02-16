@@ -94,9 +94,34 @@ impl Vec3<f64> {
         self.x.abs() < s && self.y.abs() < s && self.z.abs() < s
     }
 
-    /// Reflect across a normal
+    /// Reflect a unit vector across a normal
     pub fn reflect(self, normal: Vec3<f64>) -> Self {
         self - normal * self.dot(normal) * 2.0
+    }
+
+    /// Refract a unit vector through a plane if possible
+    ///
+    /// # Arguments
+    ///
+    /// * `normal` - Normal vector to the refraction plane
+    /// * `refraction_ratio` - Ratio eta / eta' where
+    ///                 eta is the index of refraction of the source medium and
+    ///                 eta' is the index of refraction of the destination medium.
+    ///
+    /// # Returns
+    /// * `Some(refraction)` - if refraction can occur
+    /// * `None` - if total internal reflection occurs
+    pub fn refract(self, normal: Vec3<f64>, refraction_ratio: f64) -> Option<Vec3<f64>> {
+        let cos_theta = (-self.dot(normal)).min(1.0);
+        let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+
+        if refraction_ratio * sin_theta > 1.0 {
+            return None;
+        }
+
+        let r_out_perpendicular = (self + normal * cos_theta) * refraction_ratio;
+        let r_out_parallel = normal * -((1.0 - r_out_perpendicular.norm_squared()).abs().sqrt());
+        Some(r_out_perpendicular + r_out_parallel)
     }
 }
 

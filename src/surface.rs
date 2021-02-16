@@ -44,7 +44,8 @@ impl<'a> Intersection<'a> {
 
     /// Scatter a ray off of this intersection
     pub fn scatter(&self, ray: &RayR3) -> Option<(Colour, RayR3)> {
-        self.material.scatter(ray, &self.point, &self.normal)
+        self.material
+            .scatter(ray, &self.point, &self.normal, self.front_face)
     }
 }
 

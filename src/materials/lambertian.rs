@@ -10,7 +10,13 @@ pub struct Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, _ray: &RayR3, point: &VecR3, normal: &VecR3) -> Option<(Colour, RayR3)> {
+    fn scatter(
+        &self,
+        _ray: &RayR3,
+        point: &VecR3,
+        normal: &VecR3,
+        _front_face: bool,
+    ) -> Option<(Colour, RayR3)> {
         let mut scatter_direction = *normal + rand::random();
         if scatter_direction.near_zero() {
             scatter_direction = *normal;

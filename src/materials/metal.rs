@@ -20,7 +20,13 @@ impl Metal {
 }
 
 impl Material for Metal {
-    fn scatter(&self, ray: &RayR3, point: &VecR3, normal: &VecR3) -> Option<(Colour, RayR3)> {
+    fn scatter(
+        &self,
+        ray: &RayR3,
+        point: &VecR3,
+        normal: &VecR3,
+        _front_face: bool,
+    ) -> Option<(Colour, RayR3)> {
         let reflection = ray.direction.as_unit().reflect(*normal);
         let scattered = RayR3::new(*point, reflection + rand::random::<VecR3>() * self.fuzz);
         if scattered.direction.dot(*normal) < 0.0 {
