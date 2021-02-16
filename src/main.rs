@@ -77,14 +77,19 @@ fn main() -> Result<(), anyhow::Error> {
     )));
 
     // Camera
-    // let camera_location = Vec3::new(0.0, 0.0, 0.0),
-    let camera_location = Vec3::new(-2.0, 2.0, 1.0);
+    let lookfrom = Vec3::new(3.0, 3.0, 2.0);
+    let lookat = Vec3::new(0.0, 0.0, -1.0);
+    let vup = Vec3::new(0.0, 1.0, 0.0);
+    let distance_to_focus = (lookfrom - lookat).norm();
+    let aperture = 2.0;
     let camera = Camera::new(
-        camera_location,
-        Vec3::new(0.0, 0.0, -1.0),
-        Vec3::new(0.0, 1.0, 0.0),
+        lookfrom,
+        lookat,
+        vup,
         20.0,
         opts.aspect_ratio.into(),
+        aperture,
+        distance_to_focus,
     );
 
     // Render
