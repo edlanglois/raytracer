@@ -52,7 +52,7 @@ impl<'a> Intersection<'a> {
 /// A surface in R^3
 ///
 /// Supports checking for intersection with a ray.
-pub trait Surface {
+pub trait Surface: Sync + Send {
     /// Intersect a ray with the surface.
     ///
     /// Returns the first intersection that occurs between t_min and t_max.

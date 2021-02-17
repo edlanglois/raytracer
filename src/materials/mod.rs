@@ -11,7 +11,7 @@ use crate::ray::RayR3;
 use crate::vec3::VecR3;
 
 /// A surface material
-pub trait Material {
+pub trait Material: Sync + Send {
     /// Scatter a ray off of a surface intersection
     ///
     /// # Arguments

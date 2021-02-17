@@ -5,6 +5,7 @@ pub mod objects;
 pub mod ratio;
 pub mod ray;
 pub mod surface;
+pub mod threadpool;
 pub mod vec3;
 
 pub use camera::Camera;

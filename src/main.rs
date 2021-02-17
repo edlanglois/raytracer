@@ -6,14 +6,19 @@ use rand;
 use raytracer::colour;
 use raytracer::materials::{Lambertian, Metal, Transparent};
 use raytracer::objects::Sphere;
+use raytracer::threadpool;
 use raytracer::{Camera, Colour, Ratio, RayR3, Surface, Vec3};
 use std::f64;
+use std::sync::Arc;
 
 #[derive(Clap)]
 #[clap(version = "0.1.0", author = "Eric Langlois")]
 pub struct Opts {
     #[clap(short, long, default_value = "image.png")]
     pub output: String,
+
+    #[clap(short('t'), long, default_value = "1")]
+    pub num_workers: usize,
 
     #[clap(short, long, default_value = "3:2")]
     pub aspect_ratio: Ratio<u32>,
@@ -59,32 +64,59 @@ fn main() -> Result<(), anyhow::Error> {
 
     // Render
     println!("Rendering...");
+    let render_state = Arc::new(RenderState {
+        camera,
+        surface: world,
+        image_width,
+        image_height,
+        max_depth: opts.max_depth,
+        samples_per_pixel: opts.samples_per_pixel,
+    });
+
     let bar = ProgressBar::new((image_height * image_width) as u64);
     bar.set_draw_delta(5000 / opts.samples_per_pixel as u64);
-    for (x, y, pixel) in image.enumerate_pixels_mut().progress_with(bar) {
-        let mut colour = Colour::new(0.0, 0.0, 0.0);
-        for _ in 0..opts.samples_per_pixel {
-            // (u, v) measure from bottom left corner
-            let u = (x as f64 + rand::random::<f64>()) / ((image_width - 1) as f64);
-            let v = ((image_height - 1 - y) as f64 + rand::random::<f64>())
-                / ((image_height - 1) as f64);
-            let ray = camera.get_ray(u, v);
-            colour += ray_colour(&ray, &world, opts.max_depth);
-        }
-
-        colour /= opts.samples_per_pixel as f64;
-        // Gamma-correct for gamma=2
-        colour = Colour {
-            x: colour.x.sqrt(),
-            y: colour.y.sqrt(),
-            z: colour.z.sqrt(),
-        };
-        *pixel = colour.into();
+    for ((x, y), colour) in threadpool::map(
+        image.enumerate_pixels().map(|(x, y, _pixel)| (x, y)),
+        move |(x, y)| render_pixel(&render_state, x, y),
+        opts.num_workers,
+    )
+    .progress_with(bar)
+    {
+        image[(x, y)] = colour.into();
     }
 
     println!("Saving image to '{}'", opts.output);
     image.save(opts.output)?;
     Ok(())
+}
+
+struct RenderState<T> {
+    camera: Camera,
+    surface: T,
+    image_width: u32,
+    image_height: u32,
+    max_depth: u32,
+    samples_per_pixel: u32,
+}
+
+fn render_pixel<T: Surface>(state: &RenderState<T>, x: u32, y: u32) -> Colour {
+    let mut colour = Colour::new(0.0, 0.0, 0.0);
+    for _ in 0..state.samples_per_pixel {
+        // (u, v) measure from bottom left corner
+        let u = (x as f64 + rand::random::<f64>()) / ((state.image_width - 1) as f64);
+        let v = ((state.image_height - 1 - y) as f64 + rand::random::<f64>())
+            / ((state.image_height - 1) as f64);
+        let ray = state.camera.get_ray(u, v);
+        colour += ray_colour(&ray, &state.surface, state.max_depth);
+    }
+
+    colour /= state.samples_per_pixel as f64;
+    // Gamma-correct for gamma=2
+    Colour {
+        x: colour.x.sqrt(),
+        y: colour.y.sqrt(),
+        z: colour.z.sqrt(),
+    }
 }
 
 fn ray_colour<T: Surface>(ray: &RayR3, surface: &T, depth: u32) -> Colour {
